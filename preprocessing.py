@@ -21,7 +21,7 @@ class PreProcessing():
 	def wavelet(data, wname, level, thr):
 
 	def sav_gol(data, d_order, p_order, w_length):
-		half_size 	= (w_length-1)/2
+		half_size 	= int((w_length-1)/2)
 
 		new_data 	= savgol_filter(data, window_length=w_length, polyorder=p_order, deriv=d_order, axis=1)
 
