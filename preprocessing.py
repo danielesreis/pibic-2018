@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.ndimage import convolve1d
+from scipy.signal import savgol_filter
 
 class PreProcessing():
 
@@ -7,19 +9,26 @@ class PreProcessing():
 		self.n_variables 	= n_variables
 
 	def mean_center(data):
+		mean_values =  np.mean(data, axis=0)
+		new_data 	= data - mean_values
+		return new_data
 
-	def moving_average(data, window_size):
-
-		def convolve_func(row, kernel):
-			return np.convolve(row, kernel, 'same')
-		
-		kernel 		= np.ones(window_size, dtype='uint8')/window_size
-		new_data 	= np.apply_along_axis(convolve_func, 1, data, kernel)
+	def moving_average(data, w_length):
+		kernel 		= np.ones(w_length, dtype='uint8')/w_length
+		new_data 	= convolve1d(data, kernel, axis=1, mode='constant')
 		return new_data
 
 	def wavelet(data, wname, level, thr):
 
-	def sav_gol(data, d_order, p_order, window_size):
+	def sav_gol(data, d_order, p_order, w_length):
+		half_size 	= (w_length-1)/2
+
+		new_data 	= savgol_filter(data, window_length=w_length, polyorder=p_order, deriv=d_order, axis=1)
+
+		new_data[:, :half_size-1] 	= 0
+		new_data[:, -half_size:] 	= 0
+
+		return new_data
 
 	def msc(data):
 
