@@ -18,7 +18,15 @@ class PreProcessing():
 		new_data 	= convolve1d(data, kernel, axis=1, mode='constant')
 		return new_data
 
-	def wavelet(data, wname, level, thr):
+	def wavelet_denoising(data, wname, l):
+
+		def get_default_thr():
+
+		def apply_thr(coeffs, thr):
+
+		coeffs 		= wavedec(data, wavelet=wname, level=l, axis=1) 
+		thr 		= get_default_thr():
+		new_data	= apply_thr(coeffs, thr)
 
 	def sav_gol(data, d_order, p_order, w_length):
 		half_size 	= int((w_length-1)/2)
