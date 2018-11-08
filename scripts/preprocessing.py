@@ -1,4 +1,5 @@
 import numpy as np
+from pywt import threshold, wavedec
 from scipy.ndimage import convolve1d
 from scipy.signal import savgol_filter
 
@@ -8,27 +9,34 @@ class PreProcessing():
 		self.n_samples 		= n_samples
 		self.n_variables 	= n_variables
 
-	def mean_center(data):
-		mean_values =  np.mean(data, axis=0)
+	def mean_center(self, data):
+		mean_values = np.mean(data, axis=0)
 		new_data 	= data - mean_values
 		return new_data
 
-	def moving_average(data, w_length):
+	def moving_average(self, data, w_length):
 		kernel 		= np.ones(w_length, dtype='uint8')/w_length
 		new_data 	= convolve1d(data, kernel, axis=1, mode='constant')
 		return new_data
 
-	def wavelet_denoising(data, wname, l):
+	def wavelet_denoising(self, data, wname, l):
 
-		def get_default_thr():
+		def get_default_thr(self, data):
+			coeffs 			= wavedec(data, wavelet='db1', level=1, axis=1) 
+			detail_coeffs 	= coeffs[1]
+			noiselevel 		= np.median(abs(detail_coeffs))
+			thr 			= noiselevel*math.sqrt(2*math.log(len(data)))/0.6745
+			return thr
 
-		def apply_thr(coeffs, thr):
+		def apply_thr(oeffs, thr):
+			# return pywt.threshold(coeffs, thr, 'soft')
 
-		coeffs 		= wavedec(data, wavelet=wname, level=l, axis=1) 
-		thr 		= get_default_thr():
+		# perform this for matrix (maybe use apply_along_axis as well?)
+		thr 		= get_default_thr(data)
 		new_data	= apply_thr(coeffs, thr)
+		return new_data
 
-	def sav_gol(data, d_order, p_order, w_length):
+	def sav_gol(self, data, d_order, p_order, w_length):
 		half_size 	= int((w_length-1)/2)
 
 		new_data 	= savgol_filter(data, window_length=w_length, polyorder=p_order, deriv=d_order, axis=1)
@@ -38,7 +46,7 @@ class PreProcessing():
 
 		return new_data
 
-	def msc(data):
+	def msc(self, data):
 
 		def fit_reg_line(row, mean):
 			return np.polyfit(mean, row, 1)
@@ -57,7 +65,7 @@ class PreProcessing():
 		
 		return new_data
 
-	def snv(data):
+	def snv(self, data):
 
 		def apply_correction(mean, std):
 			new_data = np.zeros((self.n_samples,self.n_variables))
