@@ -20,19 +20,19 @@ class PreProcessing():
 		return new_data
 
 	def wavelet_denoising(self, data, wname, l):
+		# assert len(data.shape) > 2, "Matrizes com mais de 2 dimensões não são aceitas"
 
-		def get_default_thr(self, data):
-			coeffs 			= wavedec(data, wavelet='db1', level=1, axis=1) 
-			detail_coeffs 	= coeffs[1]
-			noiselevel 		= np.median(abs(detail_coeffs))
-			thr 			= noiselevel*math.sqrt(2*math.log(len(data)))/0.6745
-			return thr
+		def get_default_thrs(self, data, axis):
+			detail_coeffs 	= wavedec(data, wavelet='db1', level=1, axis=axis)[1]
+			noise_level 	= np.median(abs(detail_coeffs), axis=axis)
+			thrs 			= noise_level*math.sqrt(2*math.log(data.shape[axis]))/0.6745
+			return thrs
 
 		def apply_thr(oeffs, thr):
 			# return pywt.threshold(coeffs, thr, 'soft')
 
-		# perform this for matrix (maybe use apply_along_axis as well?)
-		thr 		= get_default_thr(data)
+		axis 		= 0 if len(data.shape) == 1 else 1
+		thrs 		= get_default_thrs(data, axis)
 		new_data	= apply_thr(coeffs, thr)
 		return new_data
 
