@@ -1,60 +1,114 @@
 import numpy as np
-from pywt import threshold, wavedec
+import math
+from pywt import threshold, wavedec, Wavelet, waverec
 from scipy.ndimage import convolve1d
 from scipy.signal import savgol_filter
 
 class PreProcessing():
 
 	def __init__(self, n_samples, n_variables):
-		self.n_samples 		= n_samples
-		self.n_variables 	= n_variables
+		self.dimensions 	= (n_samples, n_variables)
 
 	def mean_center(self, data):
-		mean_values = np.mean(data, axis=0)
-		new_data 	= data - mean_values
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
+
+		axis = 0 if data.ndim == 1 else 1 
+		mean_values = np.mean(data, axis=axis)
+
+		if data.ndim == 1:
+			new_data = data - mean_values
+
+		else:
+			mean_values = np.array([mean_values]*self.dimensions[0]).transpose()
+			new_data = data - mean_values
+
 		return new_data
 
 	def moving_average(self, data, w_length):
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
+
+		axis = 0 if data.ndim == 1 else 1 
+
 		kernel 		= np.ones(w_length, dtype='uint8')/w_length
-		new_data 	= convolve1d(data, kernel, axis=1, mode='constant')
+		new_data 	= convolve1d(data, kernel, axis=axis, mode='constant')
 		return new_data
 
 	def wavelet_denoising(self, data, wname, l):
-		# assert len(data.shape) > 2, "Matrizes com mais de 2 dimensões não são aceitas"
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
 
-		def get_default_thrs(self, data, axis):
+		def get_default_thrs(axis):
 			detail_coeffs 	= wavedec(data, wavelet='db1', level=1, axis=axis)[1]
 			noise_level 	= np.median(abs(detail_coeffs), axis=axis)
 			thrs 			= noise_level*math.sqrt(2*math.log(data.shape[axis]))/0.6745
 			return thrs
 
-		def apply_thr(oeffs, thr):
-			# return pywt.threshold(coeffs, thr, 'soft')
+		def decompose_data(wavelet):
+			return wavedec(data, wavelet, level=l)
 
-		axis 		= 0 if len(data.shape) == 1 else 1
-		thrs 		= get_default_thrs(data, axis)
-		new_data	= apply_thr(coeffs, thr)
+		def apply_thr(coeffs, thrs):
+			coeffs_array 	= np.array(coeffs)
+			app_coeffs 		= coeffs_array[0].copy()
+
+			if self.dimensions[0] == 1:
+				coeffs_array 		= threshold(coeffs_array, thrs, 'soft')
+				coeffs_array[0] 	= app_coeffs
+
+			else:
+				for i in range(self.dimensions[0]):
+					coeffs_array[:,i] 		= threshold(coeffs_array[:,i], thrs[i], 'soft')
+					coeffs_array[:,i][0] 	= app_coeffs[i]
+
+			return list(coeffs_array)
+
+		def reconstruct_coeffs(thr_coeffs, wavelet):
+			if (self.dimensions[0] == 1):
+				return waverec(thr_coeffs, wavelet)[:-1]
+			else:
+				return waverec(thr_coeffs, wavelet)[:,:-1]
+
+		axis 		= 0 if data.ndim == 1 else 1
+		wavelet 	= Wavelet(wname)
+
+		thrs 		= get_default_thrs(axis)
+		coeffs 		= decompose_data(wavelet)
+		thr_coeffs	= apply_thr(coeffs, thrs)
+		thr_data 	= reconstruct_coeffs(thr_coeffs, wavelet)
+
 		return new_data
 
 	def sav_gol(self, data, d_order, p_order, w_length):
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
+
+		axis 		= 0 if data.ndim == 1 else 1
+
 		half_size 	= int((w_length-1)/2)
+		new_data 	= savgol_filter(data, window_length=w_length, polyorder=p_order, deriv=d_order, axis=axis)
 
-		new_data 	= savgol_filter(data, window_length=w_length, polyorder=p_order, deriv=d_order, axis=1)
+		if data.ndim == 1:
+			new_data[:half_size-1] 	= 0
+			new_data[-half_size:] 	= 0
 
-		new_data[:, :half_size-1] 	= 0
-		new_data[:, -half_size:] 	= 0
+		else:
+			new_data[:, :half_size-1] 	= 0
+			new_data[:, -half_size:] 	= 0
 
 		return new_data
 
 	def msc(self, data):
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
 
 		def fit_reg_line(row, mean):
 			return np.polyfit(mean, row, 1)
 
 		def apply_correction(coeffs):
-			new_data = np.zeros((self.n_samples,self.n_variables))
+			new_data = np.zeros((self.dimensions[0],self.dimensions[1]))
 
-			for i in range(self.n_samples):
+			for i in range(self.dimensions[0]):
 				new_data[i,:] = (data[i,:]-coeffs[i,1])/coeffs[i,0]
 
 			return new_data
@@ -66,11 +120,13 @@ class PreProcessing():
 		return new_data
 
 	def snv(self, data):
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
 
 		def apply_correction(mean, std):
-			new_data = np.zeros((self.n_samples,self.n_variables))
+			new_data = np.zeros((self.dimensions[0],self.dimensions[1]))
 
-			for i in range(self.n_samples):
+			for i in range(self.dimensions[0]):
 				new_data[i,:] = (data[i,:]-mean[i])/std[i]
 
 			return new_data
