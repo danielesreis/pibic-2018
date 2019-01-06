@@ -99,7 +99,7 @@ class PreProcessing():
 		return new_data
 
 	def msc(self, data):
-		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.ndim > 1, "Não é aceita uma amostra única."
 		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
 
 		def fit_reg_line(row, mean):
@@ -124,15 +124,14 @@ class PreProcessing():
 		assert data.shape == self.dimensions, "Matriz com dimensões inválidas! Espera-se " + str(self.dimensions) + ", mas " + str(data.shape) + " foi passado."
 
 		def apply_correction(mean, std):
-			new_data = np.zeros((self.dimensions[0],self.dimensions[1]))
+			new_data = (data.transpose()-mean)/std
 
-			for i in range(self.dimensions[0]):
-				new_data[i,:] = (data[i,:]-mean[i])/std[i]
+			return new_data.transpose()
 
-			return new_data
+		axis 		= 0 if data.ndim == 1 else 1
 
-		mean 		= np.mean(data, axis=1)
-		std 		= np.std(data, axis=1)
+		mean 		= np.mean(data, axis=axis)
+		std 		= np.std(data, axis=axis)
 		new_data	= apply_correction(mean, std)
 
 		return new_data
