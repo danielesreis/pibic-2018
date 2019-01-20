@@ -5,7 +5,6 @@ from scipy.ndimage import convolve1d
 from scipy.signal import savgol_filter
 
 class PreProcessing():
-
 	def mean_center(self, data):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
 
