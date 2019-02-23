@@ -4,19 +4,19 @@ from pywt import threshold, wavedec, Wavelet, waverec
 from scipy.ndimage import convolve1d
 from scipy.signal import savgol_filter
 
-class PreProcessing():
+class Preprocessing():
 	def mean_center(self, data):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
 
 		axis = 0 if data.ndim == 1 else 1
-		mean_values = np.mean(data, axis=axis)
+		mean = np.mean(data, axis=axis)
 
 		if data.ndim == 1:
-			new_data = data - mean_values
+			new_data = data - mean
 
 		else:
-			mean_values = np.array([mean_values]*data.shape[0]).transpose()
-			new_data = data - mean_values
+			mean = np.array([mean]*data.shape[0]).transpose()
+			new_data = data - mean
 
 		return new_data
 
@@ -72,7 +72,25 @@ class PreProcessing():
 
 		return thr_data
 
-	def sav_gol(self, data, d_order, p_order, w_length):
+	def sav_gol(self, data, p_order, w_length):
+		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+
+		axis 		= 0 if data.ndim == 1 else 1
+
+		half_size 	= int((w_length-1)/2)
+		new_data 	= savgol_filter(data, window_length=w_length, polyorder=p_order, deriv=0, axis=axis)
+
+		if data.ndim == 1:
+			new_data[:half_size-1] 	= 0
+			new_data[-half_size:] 	= 0
+
+		else:
+			new_data[:,:half_size-1] 	= 0
+			new_data[:,-half_size:] 	= 0
+
+		return new_data
+
+	def sav_gol_derivative(self, data, d_order, p_order, w_length):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
 
 		axis 		= 0 if data.ndim == 1 else 1
@@ -85,8 +103,8 @@ class PreProcessing():
 			new_data[-half_size:] 	= 0
 
 		else:
-			new_data[:, :half_size-1] 	= 0
-			new_data[:, -half_size:] 	= 0
+			new_data[:,:half_size-1] 	= 0
+			new_data[:,-half_size:] 	= 0
 
 		return new_data
 
