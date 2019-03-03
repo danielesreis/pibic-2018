@@ -5,8 +5,12 @@ from scipy.ndimage import convolve1d
 from scipy.signal import savgol_filter
 
 class Preprocessing():
+
 	def mean_center(self, data):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+
+		def subtract_mean(data, mean):
+			return data - mean
 
 		axis = 0 if data.ndim == 1 else 1
 		mean = np.mean(data, axis=axis)
@@ -15,8 +19,8 @@ class Preprocessing():
 			new_data = data - mean
 
 		else:
-			mean = np.array([mean]*data.shape[0]).transpose()
-			new_data = data - mean
+			mean = mean.transpose()
+			new_data = np.apply_along_axis(subtract_mean, 0, data, mean)
 
 		return new_data
 
@@ -45,7 +49,7 @@ class Preprocessing():
 			coeffs_array 	= np.array(coeffs)
 			app_coeffs 		= coeffs_array[0].copy()
 
-			if data.shape[0] == 1:
+			if data.ndim == 1:
 				coeffs_array 		= threshold(coeffs_array, thrs, 'soft')
 				coeffs_array[0] 	= app_coeffs
 
