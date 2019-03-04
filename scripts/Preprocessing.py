@@ -36,43 +36,41 @@ class Preprocessing():
 	def wavelet_denoising(self, data, wname, l):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
 
-		def get_default_thrs(axis):
-			detail_coeffs 	= wavedec(data, wavelet='db1', level=1, axis=axis)[1]
-			noise_level 	= np.median(abs(detail_coeffs), axis=axis)
-			thrs 			= noise_level*math.sqrt(2*math.log(data.shape[axis]))/0.6745
+		def get_default_thrs(sample):
+			detail_coeffs 	= wavedec(sample, wavelet='db1', level=1, axis=0)[1]
+			noise_level 	= np.median(abs(detail_coeffs), axis=0)
+			thrs 			= noise_level*math.sqrt(2*math.log(sample.shape[0]))/0.6745
 			return thrs
 
-		def decompose_data(wavelet):
-			return wavedec(data, wavelet, level=l)
+		def decompose_data(sample, wavelet):
+			return wavedec(sample, wavelet, level=l)
 
 		def apply_thr(coeffs, thrs):
-			coeffs_array 	= np.array(coeffs)
-			app_coeffs 		= coeffs_array[0].copy()
+			app_coeffs 	= coeffs[0].copy()
 
-			if data.ndim == 1:
-				coeffs_array 		= threshold(coeffs_array, thrs, 'soft')
-				coeffs_array[0] 	= app_coeffs
+			coeffs 		= list(map(lambda arr: threshold(arr, thrs, 'soft'), coeffs))
+			coeffs[0] 	= app_coeffs
 
-			else:
-				for i in range(data.shape[0]):
-					coeffs_array[:,i] 		= threshold(coeffs_array[:,i], thrs[i], 'soft')
-					coeffs_array[:,i][0] 	= app_coeffs[i]
-
-			return list(coeffs_array)
+			return coeffs
 
 		def reconstruct_coeffs(thr_coeffs, wavelet):
-			if (data.shape[0] == 1):
-				return waverec(thr_coeffs, wavelet)[:-1]
-			else:
-				return waverec(thr_coeffs, wavelet)[:,:-1]
+			return waverec(thr_coeffs, wavelet)	
 
-		axis 		= 0 if data.ndim == 1 else 1
+		def denoise(sample, wavelet):
+			thrs 		= get_default_thrs(sample)
+			coeffs 		= decompose_data(sample, wavelet)
+			thr_coeffs	= apply_thr(coeffs, thrs)
+			thr_data 	= reconstruct_coeffs(thr_coeffs, wavelet)
+			return thr_data
+
+			return thr_data
+			
 		wavelet 	= Wavelet(wname)
 
-		thrs 		= get_default_thrs(axis)
-		coeffs 		= decompose_data(wavelet)
-		thr_coeffs	= apply_thr(coeffs, thrs)
-		thr_data 	= reconstruct_coeffs(thr_coeffs, wavelet)
+		if data.ndim == 1:
+			thr_data = denoise(data, wavelet)
+		else:
+			thr_data = np.apply_along_axis(denoise, 1, data, wavelet)
 
 		return thr_data
 
@@ -92,7 +90,7 @@ class Preprocessing():
 			new_data[:,:half_size-1] 	= 0
 			new_data[:,-half_size:] 	= 0
 
-		return new_data
+		return new_data0
 
 	def sav_gol_derivative(self, data, d_order, p_order, w_length):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
