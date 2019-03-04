@@ -62,8 +62,6 @@ class Preprocessing():
 			thr_coeffs	= apply_thr(coeffs, thrs)
 			thr_data 	= reconstruct_coeffs(thr_coeffs, wavelet)
 			return thr_data
-
-			return thr_data
 			
 		wavelet 	= Wavelet(wname)
 
