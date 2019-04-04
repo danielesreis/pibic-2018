@@ -7,22 +7,15 @@ from scipy.signal import savgol_filter
 class Preprocessing():
 
 	def mean_center(self, data):
-		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
+		assert data.ndim >= 2, "Matrizes com menos de 2 dimensões não são aceitas."
 
 		def subtract_mean(data, mean):
 			return data - mean
 
-		axis = 0 if data.ndim == 1 else 1
-		mean = np.mean(data, axis=axis)
+		mean = np.mean(data, axis=0)
+		new_data = np.apply_along_axis(subtract_mean, 0, data.transpose(), mean)
 
-		if data.ndim == 1:
-			new_data = data - mean
-
-		else:
-			mean = mean.transpose()
-			new_data = np.apply_along_axis(subtract_mean, 0, data, mean)
-
-		return new_data
+		return new_data.transpose()
 
 	def moving_average(self, data, w_length):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
