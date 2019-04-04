@@ -88,7 +88,7 @@ class Preprocessing():
 			new_data[:,:half_size-1] 	= 0
 			new_data[:,-half_size:] 	= 0
 
-		return new_data0
+		return new_data
 
 	def sav_gol_derivative(self, data, d_order, p_order, w_length):
 		assert data.ndim <= 2, "Matrizes com mais de 2 dimensões não são aceitas."
