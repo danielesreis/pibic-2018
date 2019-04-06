@@ -3,4 +3,4 @@ absorbancia.csv
 data/
 .vscode/
 notebooks/.ipynb_checkpoints
-scripts/__pycache__/
+scripts/__pycache__
