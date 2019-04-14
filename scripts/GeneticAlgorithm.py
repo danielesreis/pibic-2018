@@ -5,14 +5,15 @@ import random
 
 class GeneticAlgorithm():
 
-    def __init__(self, model, population_size, mutation_rate, iterations_number, max_var, variables, crossover_prob):
-        self.model = model
+    def __init__(self, build_model, population_size, mutation_rate, iterations_number, max_var, variables, crossover_prob):
+        self.build_model = build_model
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.iterations_number = iterations_number
         self.max_var = max_var
         self.variables = variables
         self.crossover_prob = crossover_prob
+
         self._cromossomes = None
         self._new_generation = None
         self._fitness_values = None
@@ -53,6 +54,7 @@ class GeneticAlgorithm():
     # elitism maybe?
 
     def best_cromossome(self):
+        print('Im assuming the best cromossome is the one with the highest fitness function!!!!!!')
         return self.fitness_values['fitness'].sort_values(ascending=False).iloc[0].index.value
 
     def initial_pop(self):
@@ -67,7 +69,7 @@ class GeneticAlgorithm():
 
         for cromossome in range(self.population_size):
             selected_wvls = self.variables[self.cromossomes.iloc[cromossome].values == 1]
-            fitness_values[cromossome] = self.model.build(selected_wvls)
+            fitness_values[cromossome] = self.build_model(selected_wvls)
 
         self.fitness_values = pd.DataFrame(index=np.arange(self.population_size), columns=['cromossome', 'fitness'])
         self.fitness_values['cromossome'] = self.cromossomes
@@ -83,7 +85,7 @@ class GeneticAlgorithm():
         return best_cromossomes
 
     def reproduction(self, selected):
-        prob = self.crossover_prob * 100
+        prob = self.crossover_prob*100
         assert type(prob) is not int, 'A probabilidade do crossover deve ser inteira!'
 
         mask = pd.Series(np.array([0]*len(self.variables)))
@@ -102,8 +104,9 @@ class GeneticAlgorithm():
         return pd.Series([0]*(len(self.variables) - len(child)) + child)
 
     def mutation(self, cromossome):
-        prob = self.mutation_rate * 100
+        prob = self.mutation_rate*100
         assert type(prob) is not int, 'A taxa de mutacao deve ser inteira!'
+
         return cromossome.apply(lambda x: int(not x) if random.randint(0, 99) == prob else x)
 
     def increase_generation(self, index, cromossome):
@@ -111,7 +114,7 @@ class GeneticAlgorithm():
 
     def otimize(self):
         self.cromossomes = self.initial_pop()
-
+        print('should I be using RPD as the stop criteria? As I stated in the submission form?...')
         for __ in range(self.iterations_number):
             self.fit_model()
             for cromossome in range(self.population_size):
