@@ -43,7 +43,7 @@ class Training():
 		return PLSRegression(self.lv_number, self.max_iter, self.scale)
 
 	def rna_model(self):
-		return MLPRegressor(self.hidden_layer_sizes, self.activation, self.learning_rate_init, self.max_iter)
+		return MLPRegressor(tuple([self.hidden_layer_sizes]), self.activation, self.learning_rate_init, self.max_iter)
 
 	def cv(self, model, k):
 		metrics = pd.DataFrame(columns=['R2', 'MSE'])
