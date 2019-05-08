@@ -1,6 +1,8 @@
 scripts/.vscode
 absorbancia.csv
 data/
+plots/
+results/
 .vscode/
 notebooks/.ipynb_checkpoints
 scripts/__pycache__
